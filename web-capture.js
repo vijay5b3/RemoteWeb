@@ -26,7 +26,7 @@ class WebScreenCapture {
         //  ?signaling=ws://localhost:3001
         //  ?signaling=wss://signaler.example.com:443
         const params = new URLSearchParams(window.location.search);
-        const signalingParam = params.get('signaling') || params.get('signalingUrl');
+    const signalingParam = params.get('signaling') || params.get('signalingUrl');
         const normalize = (s) => {
             if (!s) return null;
             // if it already contains ws:// or wss://, return as-is
@@ -37,10 +37,9 @@ class WebScreenCapture {
         if (signalingParam) {
             this.signalingUrl = normalize(signalingParam);
         } else {
-            // Prefer explicit hostname so we don't accidentally append extra ports to location.host
-            this.signalingUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-                ? 'ws://localhost:3001'
-                : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname + ':3001';
+            // Defer to a runtime config (signaling.json) or fallback later. We set to null
+            // here so connectSignaling can attempt to fetch a deployed config file.
+            this.signalingUrl = null;
         }
     this.signalingSocket = null;
     this.peerConnections = new Map(); // viewerId -> RTCPeerConnection (host)
@@ -231,13 +230,42 @@ class WebScreenCapture {
 
     /* -------------------- Signaling and WebRTC -------------------- */
     connectSignaling() {
-        if (this.signalingSocket && this.signalingSocket.readyState === WebSocket.OPEN) return;
-        try {
-            this.signalingSocket = new WebSocket(this.signalingUrl);
-        } catch (e) {
-            console.warn('Signaling connection failed', e);
-            return;
-        }
+        (async () => {
+            if (this.signalingSocket && this.signalingSocket.readyState === WebSocket.OPEN) return;
+
+            // If signalingUrl wasn't provided via query param, try loading a runtime config
+            // at /signaling.json (served from the site root). This lets you deploy a small
+            // JSON file with the production signaling URL without build-time injection.
+            if (!this.signalingUrl) {
+                try {
+                    const resp = await fetch('/signaling.json', { cache: 'no-store' });
+                    if (resp.ok) {
+                        const cfg = await resp.json();
+                        const confUrl = cfg.signaling || cfg.signalingUrl || null;
+                        if (confUrl) this.signalingUrl = normalize(confUrl);
+                    }
+                } catch (e) {
+                    // ignore and fallback below
+                }
+            }
+
+            // Fallback to host:3001 only for local development (localhost), otherwise attempt
+            // to use the site host but without blindly appending :3001 which caused errors on
+            // hosted platforms. If no signalingUrl is known, default to wss/ws on same host.
+            if (!this.signalingUrl) {
+                this.signalingUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                    ? 'ws://localhost:3001'
+                    : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname;
+            }
+
+            try {
+                console.log('[signaling] connecting to', this.signalingUrl);
+                this.signalingSocket = new WebSocket(this.signalingUrl);
+            } catch (e) {
+                console.warn('Signaling connection failed', e);
+                return;
+            }
+        })();
 
         this.signalingSocket.addEventListener('open', () => {
             // Determine role: if URL has ?room and this page isn't currently capturing, act as viewer.
