@@ -621,12 +621,10 @@ class WebScreenCapture {
             const params = new URLSearchParams(window.location.search);
             // set/replace room param
             params.set('room', room);
-            // if current page had a signaling/signalingUrl param, preserve it
-            if (params.has('signaling') || params.has('signalingUrl')) {
-                // nothing to do, it's preserved
-            } else if (this.signalingUrl) {
-                // If page was using a non-default signalingUrl (for example provided via start URL), try to preserve it.
-                // Only add it if it's not the default auto-derived value for the current host.
+            // Ensure signaling param is present in the generated share link so viewers connect
+            // to the same signaling server. Prefer any existing signaling param, otherwise
+            // add the one currently used by this page (`this.signalingUrl`) when available.
+            if (!(params.has('signaling') || params.has('signalingUrl')) && this.signalingUrl) {
                 params.set('signaling', this.signalingUrl);
             }
             u.search = params.toString();
