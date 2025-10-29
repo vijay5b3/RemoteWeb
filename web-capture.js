@@ -612,11 +612,42 @@ class WebScreenCapture {
         const room = this.roomId || this.generateRoomId();
         // ensure we remember the chosen roomId
         this.roomId = room;
+
+        // Build share URL while preserving any important signaling override query param
         const base = window.location.origin + window.location.pathname;
-        const url = `${base}?room=${room}`;
-        this.shareUrlInput.value = url;
-        try { navigator.clipboard?.writeText(url); } catch (e) {}
-        this.addSubtitleInfo('Share link generated and copied to clipboard: ' + room, 'info');
+        try {
+            const u = new URL(base, window.location.href);
+            // copy existing signaling params if present so viewers know where to connect
+            const params = new URLSearchParams(window.location.search);
+            // set/replace room param
+            params.set('room', room);
+            // if current page had a signaling/signalingUrl param, preserve it
+            if (params.has('signaling') || params.has('signalingUrl')) {
+                // nothing to do, it's preserved
+            } else if (this.signalingUrl) {
+                // If page was using a non-default signalingUrl (for example provided via start URL), try to preserve it.
+                // Only add it if it's not the default auto-derived value for the current host.
+                params.set('signaling', this.signalingUrl);
+            }
+            u.search = params.toString();
+            const url = u.toString();
+            this.shareUrlInput.value = url;
+            try { navigator.clipboard?.writeText(url); } catch (e) {}
+
+            // Warn if signaling points to localhost — viewers won't be able to reach a local-only signaling server
+            const signalingParam = params.get('signaling') || params.get('signalingUrl') || '';
+            if (/localhost|127\.0\.0\.1/.test(signalingParam)) {
+                this.addSubtitleInfo('Share link generated (NOTE: signaling points to a localhost address; external viewers will NOT connect unless you expose the signaling server publicly).', 'warning');
+            } else {
+                this.addSubtitleInfo('Share link generated and copied to clipboard: ' + room, 'info');
+            }
+        } catch (e) {
+            const url = `${base}?room=${room}`;
+            this.shareUrlInput.value = url;
+            try { navigator.clipboard?.writeText(url); } catch (e) {}
+            this.addSubtitleInfo('Share link generated and copied to clipboard: ' + room, 'info');
+        }
+
         // If not already connected to signaling, connect so host is present in that room
         if (!this.signalingSocket || this.signalingSocket.readyState !== WebSocket.OPEN) this.connectSignaling();
     }
