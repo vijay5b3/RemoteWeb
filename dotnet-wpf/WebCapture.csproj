@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WebView2 for embedding your existing web UI -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3590-prerelease" />
+    <!-- MixedReality.WebRTC removed for now to simplify initial build; add later when integrating native WebRTC -->
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Azure Cognitive Services Speech SDK for native transcription -->
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.24.0" />
+  </ItemGroup>
+</Project>

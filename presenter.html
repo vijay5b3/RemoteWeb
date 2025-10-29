@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Presenter - Web-to-Web Screen Capture</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Minimal overrides for presenter window */
+        .controls-section{display:flex;flex-direction:column;gap:12px;padding:18px}
+        .presenter-instructions{padding:14px;color:#dfeffc}
+        .presenter-start{font-size:1.25rem;padding:12px 18px;border-radius:10px}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1 id="title">Presenter Window</h1>
+            <div class="status" id="status">Presenter</div>
+        </header>
+
+        <main class="main-grid">
+            <section class="controls-section">
+                <div class="presenter-instructions">
+                    This is a minimal presenter window intended to be shared via your browser's screen/window selector.
+                    Click "Start Screen Capture" below, then when the browser prompts, choose this window to share (so viewers don't see your main UI).
+                </div>
+                <div class="controls">
+                    <button id="startBtn" class="presenter-start">Start Screen Capture</button>
+                    <button id="stopBtn" disabled>Stop</button>
+                </div>
+                <div class="toggles">
+                    <label><input type="checkbox" id="systemAudio" checked> Include System Audio</label>
+                    <label><input type="checkbox" id="enableSubtitles" checked> Enable Live Subtitles</label>
+                </div>
+            </section>
+
+            <section class="preview-section">
+                <video id="preview" autoplay playsinline muted></video>
+            </section>
+        </main>
+
+        <aside class="subtitles-panel" id="subtitlesPanel">
+            <h3>Live Subtitles</h3>
+            <div id="subtitlesContainer" class="subtitles-container"></div>
+        </aside>
+
+        <footer class="footer">
+            <small>Presenter mode — use this window when sharing to hide the main UI.</small>
+        </footer>
+    </div>
+
+    <script src="web-capture.js"></script>
+</body>
+</html>

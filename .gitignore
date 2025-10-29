@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist/
+build/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS/IDE
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# dotnet
+bin/
+obj/
+
+# WPF publish
+publish/
+
+# Models and large assets
+dotnet-wpf/models/
+
+# Environment
+.env
+.env.local
+
+# Electron
+dist-electron/

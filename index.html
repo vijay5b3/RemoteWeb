@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Web-to-Web Screen Capture</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1 id="title">Web-to-Web Screen Capture</h1>
+            <div class="status" id="status">Ready</div>
+        </header>
+
+        <main class="main-grid">
+            <section class="controls-section">
+                <div class="controls">
+                    <button id="startBtn">Start Screen Capture</button>
+                    <button id="stopBtn" disabled>Stop</button>
+                    <button id="fullscreenBtn" disabled>Clean Capture Mode</button>
+                    <button id="presenterBtn" disabled>Open Presenter Window</button>
+                </div>
+
+                <div class="toggles">
+                    <label><input type="checkbox" id="systemAudio" checked> Include System Audio</label>
+                    <label><input type="checkbox" id="enableSubtitles" checked> Enable Live Subtitles</label>
+                </div>
+
+                <div class="share">
+                    <button id="generateShare">Generate Share Link</button>
+                    <input id="shareUrl" readonly placeholder="Share URL will appear here" />
+                    <button id="copyShare" title="Copy share link">Copy</button>
+                </div>
+            </section>
+
+            <section class="preview-section">
+                <video id="preview" autoplay playsinline muted></video>
+            </section>
+
+            <aside class="subtitles-panel" id="subtitlesPanel">
+                <div class="panel-header">
+                    <h3 style="margin:0">Live Subtitles</h3>
+                    <button id="closeSubtitles" class="close-btn" title="Hide subtitles">✕</button>
+                </div>
+                <div id="subtitlesContainer" class="subtitles-container"></div>
+            </aside>
+
+        </main>
+
+        <footer class="footer">
+            <small>Uses getDisplayMedia + Web Speech API where available.</small>
+        </footer>
+    </div>
+
+    <script src="web-capture.js"></script>
+</body>
+</html>
