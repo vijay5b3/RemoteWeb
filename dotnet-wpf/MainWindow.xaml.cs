@@ -9,7 +9,12 @@ namespace WebCapture
 {
     public partial class MainWindow : Window
     {
-        private string signalingUrl = "http://localhost:3001"; // where server.js serves
+    // Default web start URL for the embedded WebView. You can override with the
+    // environment variable `WEB_START_URL` (for example in development).
+    // By default we point to the deployed frontend so the Windows app loads the hosted UI.
+    private string startUrl = Environment.GetEnvironmentVariable("WEB_START_URL") ?? "https://remote-web-omega.vercel.app/";
+    // Default signaling host used by the page. You can override via `SIGNALING_URL` env var.
+    private string signalingUrl = Environment.GetEnvironmentVariable("SIGNALING_URL") ?? "ws://localhost:3001";
         private TranscriptionService _transcriber;
         public MainWindow()
         {
@@ -22,8 +27,31 @@ namespace WebCapture
             try
             {
                 await WebView.EnsureCoreWebView2Async();
-                // Navigate to local hosted app. Make sure you run `node server.js` first (npm start)
-                WebView.CoreWebView2.Navigate(signalingUrl);
+                // Navigate to the frontend. If the page needs a signaling override (for example to
+                // talk to a local `server.js` while the site is hosted remotely), we append the
+                // `signaling` query parameter so the client will use the provided WebSocket URL.
+                // Build the navigate URL carefully to preserve existing query params.
+                var nav = startUrl;
+                try
+                {
+                    var uri = new Uri(startUrl);
+                    var qp = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                    // only set signaling param if it's not already present
+                    if (string.IsNullOrWhiteSpace(qp.Get("signaling")) && string.IsNullOrWhiteSpace(qp.Get("signalingUrl")))
+                    {
+                        qp.Set("signaling", signalingUrl);
+                        var ub = new UriBuilder(uri) { Query = qp.ToString() };
+                        nav = ub.ToString();
+                    }
+                }
+                catch
+                {
+                    // fallback: naive append
+                    if (!startUrl.Contains("?")) nav = startUrl + "?signaling=" + signalingUrl;
+                    else nav = startUrl + "&signaling=" + signalingUrl;
+                }
+
+                WebView.CoreWebView2.Navigate(nav);
                 WebView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
             }
             catch (Exception ex)

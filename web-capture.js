@@ -21,10 +21,27 @@ class WebScreenCapture {
     this.isPresenter = new URLSearchParams(window.location.search).get('presenter') === '1';
     this.isElectron = navigator.userAgent.toLowerCase().includes('electron');
         // WebRTC / signaling
-        // Prefer explicit hostname so we don't accidentally append extra ports to location.host
-        this.signalingUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'ws://localhost:3001'
-            : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname + ':3001';
+        // Allow overriding the signaling URL via query parameter `signaling` or `signalingUrl`.
+        // Examples:
+        //  ?signaling=ws://localhost:3001
+        //  ?signaling=wss://signaler.example.com:443
+        const params = new URLSearchParams(window.location.search);
+        const signalingParam = params.get('signaling') || params.get('signalingUrl');
+        const normalize = (s) => {
+            if (!s) return null;
+            // if it already contains ws:// or wss://, return as-is
+            if (/^wss?:\/\//i.test(s)) return s;
+            // otherwise assume ws and prepend scheme
+            return (location.protocol === 'https:' ? 'wss://' : 'ws://') + s;
+        };
+        if (signalingParam) {
+            this.signalingUrl = normalize(signalingParam);
+        } else {
+            // Prefer explicit hostname so we don't accidentally append extra ports to location.host
+            this.signalingUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                ? 'ws://localhost:3001'
+                : (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname + ':3001';
+        }
     this.signalingSocket = null;
     this.peerConnections = new Map(); // viewerId -> RTCPeerConnection (host)
     this.dataChannels = new Map(); // viewerId -> RTCDataChannel (host)
